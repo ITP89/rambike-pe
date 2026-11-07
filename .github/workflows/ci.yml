@@ -16,21 +16,21 @@ jobs:
           node-version: 22
 
       - name: Instalar dependencias de pruebas
-        working-directory: tests
+        working-directory: rambike-repo/tests
         run: |
           npm install
           npx playwright-core install --with-deps chromium
 
       - name: Levantar el sitio
         run: |
-          python3 -m http.server 8080 &
+          python3 -m http.server 8080 --directory rambike-repo &
           sleep 2
 
       - name: Ejecutar 38 casos + accesibilidad (axe-core)
-        working-directory: tests
+        working-directory: rambike-repo/tests
         env:
           BASE: http://localhost:8080
-          PROJECT_DIR: ${{ github.workspace }}
+          PROJECT_DIR: ${{ github.workspace }}/rambike-repo
         run: node run.js
 
       - name: Guardar evidencias
@@ -39,8 +39,8 @@ jobs:
         with:
           name: evidencias-pruebas
           path: |
-            tests/results.json
-            tests/axe.json
-            tests/contrast.json
-            tests/weight.json
-            tests/shots
+            rambike-repo/tests/results.json
+            rambike-repo/tests/axe.json
+            rambike-repo/tests/contrast.json
+            rambike-repo/tests/weight.json
+            rambike-repo/tests/shots
