@@ -1,0 +1,46 @@
+name: CI - Pruebas de calidad RAMBIKE
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar dependencias de pruebas
+        working-directory: tests
+        run: |
+          npm install
+          npx playwright-core install --with-deps chromium
+
+      - name: Levantar el sitio
+        run: |
+          python3 -m http.server 8080 &
+          sleep 2
+
+      - name: Ejecutar 38 casos + accesibilidad (axe-core)
+        working-directory: tests
+        env:
+          BASE: http://localhost:8080
+          PROJECT_DIR: ${{ github.workspace }}
+        run: node run.js
+
+      - name: Guardar evidencias
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencias-pruebas
+          path: |
+            tests/results.json
+            tests/axe.json
+            tests/contrast.json
+            tests/weight.json
+            tests/shots
