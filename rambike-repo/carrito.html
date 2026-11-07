@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE.PE — Mi carrito</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="history.back()" aria-label="Volver">←</button>
+      <span class="brand" style="font-size:16px">Mi carrito</span>
+      <span style="width:22px"></span>
+    </header>
+
+    <div id="cartContent"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"><span class="nav-icon">🏠</span>Inicio</a>
+    <a href="tienda.html"><span class="nav-icon">🏪</span>Tienda</a>
+    <a href="carrito.html" class="active nav-icon-wrap"><span class="nav-icon">🛒<span class="cart-badge">0</span></span>Carrito</a>
+  </nav>
+
+  <div id="modalRoot"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    function renderCart() {
+      const items = cartDetailed();
+      const content = document.getElementById("cartContent");
+
+      if (items.length === 0) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="big-icon">🛒</div>
+            <p>Tu carrito está vacío</p>
+            <a href="tienda.html" class="btn btn-primary" style="margin-top:14px; display:inline-flex; width:auto; padding:12px 24px;">Ver catálogo</a>
+          </div>
+        `;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="cart-list">
+          ${items.map(i => `
+            <div class="cart-item" data-id="${i.id}">
+              <img class="thumb" src="${escapeHtml(i.img)}" alt="${escapeHtml(i.name)}" />
+              <div class="meta">
+                <p class="name">${escapeHtml(i.name)}</p>
+                <div class="qty-control sm">
+                  <button type="button" class="qty-minus" data-id="${i.id}">−</button>
+                  <span>${i.qty}</span>
+                  <button type="button" class="qty-plus" data-id="${i.id}">+</button>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+                <span class="price">${formatPrice(i.subtotal)}</span>
+                <button type="button" class="remove-btn" data-id="${i.id}" aria-label="Eliminar">🗑</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+        <div class="cart-summary">
+          <div class="total-row">
+            <span class="label">Total:</span>
+            <span class="amount">${formatPrice(cartTotal())}</span>
+          </div>
+          <button id="sendBtn" class="btn btn-whatsapp">💬 Enviar pedido por WhatsApp</button>
+        </div>
+      `;
+
+      content.querySelectorAll(".qty-minus").forEach(btn => btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const item = cartDetailed().find(i => i.id === id);
+        updateCartQty(id, item.qty - 1);
+        renderCart();
+      }));
+      content.querySelectorAll(".qty-plus").forEach(btn => btn.addEventListener("click", () => {
+        const id = Number(btn.dataset.id);
+        const item = cartDetailed().find(i => i.id === id);
+        updateCartQty(id, item.qty + 1);
+        renderCart();
+      }));
+      content.querySelectorAll(".remove-btn").forEach(btn => btn.addEventListener("click", () => {
+        removeFromCart(Number(btn.dataset.id));
+        renderCart();
+      }));
+
+      document.getElementById("sendBtn").addEventListener("click", showConfirmModal);
+    }
+
+    function showConfirmModal() {
+      const items = cartDetailed();
+      const modalRoot = document.getElementById("modalRoot");
+      modalRoot.innerHTML = `
+        <div class="modal-overlay" id="overlay">
+          <div class="modal-card">
+            <div class="modal-icon">🛵</div>
+            <h3>Resumen de pedido</h3>
+            <p class="sub">Revisa tu lista antes de enviar a WhatsApp</p>
+            <div class="wa-preview">
+              <span class="wa-label">Mensaje a enviar:</span>
+              ${items.map(i => `• ${i.qty}x ${escapeHtml(i.name)} - ${formatPrice(i.subtotal)}<br/>`).join("")}
+              <span class="wa-total">TOTAL: ${formatPrice(cartTotal())}</span>
+            </div>
+            <a href="${whatsappLink()}" target="_blank" class="btn btn-whatsapp" id="confirmWaBtn">✓ Confirmar y abrir WhatsApp</a>
+            <button class="btn btn-outline" style="margin-top:10px;" id="cancelBtn">Cancelar</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("cancelBtn").addEventListener("click", () => modalRoot.innerHTML = "");
+      document.getElementById("overlay").addEventListener("click", (e) => {
+        if (e.target.id === "overlay") modalRoot.innerHTML = "";
+      });
+    }
+
+    renderCart();
+    updateCartBadge();
+  </script>
+</body>
+</html>

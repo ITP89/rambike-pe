@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE Admin — Iniciar sesión</title>
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="logo">RAMBIKE.PE</div>
+      <p class="sub">Panel de administración</p>
+
+      <div class="login-error" id="loginError">Usuario o contraseña incorrectos.</div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="user">Usuario o correo</label>
+          <input type="text" id="user" placeholder="admin" />
+        </div>
+        <div class="form-group">
+          <label for="pass">Contraseña</label>
+          <input type="password" id="pass" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+      </form>
+
+      <p class="login-hint">Demo: usuario <strong>admin</strong> / contraseña <strong>rambike2026</strong></p>
+    </div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const user = document.getElementById("user").value.trim();
+      const pass = document.getElementById("pass").value.trim();
+      const errorBox = document.getElementById("loginError");
+
+      if (user === "admin" && pass === "rambike2026") {
+        sessionStorage.setItem("rambike_admin_session", "1");
+        window.location.href = "productos.html";
+      } else {
+        errorBox.classList.add("show");
+      }
+    });
+  </script>
+</body>
+</html>

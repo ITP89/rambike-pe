@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE.PE — Inicio</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-header">
+      <span class="brand">RAMBIKE.PE</span>
+      <div class="header-actions">
+        <a href="carrito.html" class="icon-btn nav-icon-wrap" aria-label="Carrito">
+          🛒<span class="cart-badge">0</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="search-bar" onclick="window.location.href='tienda.html'">
+      <span>🔍</span>
+      <input type="text" placeholder="Buscar repuestos o accesorios..." readonly />
+    </div>
+
+    <div class="banner">
+      <div class="banner-text">
+        <span class="tag">TEMPORADA DE AVENTURA</span>
+        <h2>Súbete a la ruta con 20% de descuento</h2>
+        <p>Aplica en luces y repuestos seleccionados</p>
+      </div>
+    </div>
+
+    <div class="section-title">Categorías</div>
+    <div class="category-chips" id="homeCategoryChips"></div>
+
+    <div class="section-title">Productos Destacados</div>
+    <div class="product-grid" id="featuredGrid"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="active"><span class="nav-icon">🏠</span>Inicio</a>
+    <a href="tienda.html"><span class="nav-icon">🏪</span>Tienda</a>
+    <a href="carrito.html" class="nav-icon-wrap"><span class="nav-icon">🛒<span class="cart-badge">0</span></span>Carrito</a>
+  </nav>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const cats = getCategories();
+    document.getElementById("homeCategoryChips").innerHTML = cats.map(c =>
+      `<a href="tienda.html?cat=${encodeURIComponent(c)}" class="chip">${escapeHtml(c)}</a>`
+    ).join("");
+
+    const products = getProducts();
+    const featured = products.slice(0, 4);
+    document.getElementById("featuredGrid").innerHTML = featured.map(p => `
+      <a href="producto.html?id=${p.id}" class="product-card">
+        <div style="position:relative">
+          <img class="thumb" src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" />
+          <span class="badge ${p.stock ? 'ok' : 'out'}">${p.stock ? 'Disponible' : 'Agotado'}</span>
+        </div>
+        <div class="info">
+          <p class="pname">${escapeHtml(p.name)}</p>
+          <span class="pprice">${formatPrice(p.price)}</span>
+        </div>
+      </a>
+    `).join("");
+
+    updateCartBadge();
+  </script>
+</body>
+</html>

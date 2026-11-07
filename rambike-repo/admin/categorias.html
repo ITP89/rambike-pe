@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE Admin — Categorías</title>
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="admin-wrapper">
+    <div id="sidebarRoot"></div>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Categorías</h1>
+        <button id="newCatBtn" class="btn btn-primary" style="width:auto; padding:11px 20px;">+ Nueva categoría</button>
+      </div>
+
+      <div class="cat-list" id="catList"></div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    requireAdminSession();
+    document.getElementById("sidebarRoot").innerHTML = renderAdminSidebar("categorias.html");
+    wireLogout();
+
+    function renderCats() {
+      const cats = getCategories();
+      const list = document.getElementById("catList");
+      list.innerHTML = cats.map((c, idx) => `
+        <div class="cat-row" data-idx="${idx}">
+          <span class="cat-name">${escapeHtml(c)}</span>
+          <div class="row-actions">
+            <button class="icon-action edit-cat-btn" data-idx="${idx}" title="Editar">✏️</button>
+            <button class="icon-action delete-cat-btn" data-idx="${idx}" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+      `).join("");
+
+      list.querySelectorAll(".delete-cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.idx);
+          const cats = getCategories();
+          const catName = cats[idx];
+          const inUse = getProducts().some(p => p.category === catName);
+          if (inUse) {
+            alert(`No se puede eliminar "${catName}" porque hay productos asignados a esta categoría.`);
+            return;
+          }
+          if (confirm(`¿Eliminar la categoría "${catName}"?`)) {
+            cats.splice(idx, 1);
+            saveCategories(cats);
+            renderCats();
+          }
+        });
+      });
+
+      list.querySelectorAll(".edit-cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.idx);
+          const cats = getCategories();
+          const row = list.querySelector(`.cat-row[data-idx="${idx}"]`);
+          row.innerHTML = `
+            <div class="inline-edit">
+              <input type="text" id="editInput" value="${escapeHtml(cats[idx])}" />
+              <button class="btn btn-primary btn-sm" id="saveEditBtn">Guardar</button>
+            </div>
+          `;
+          document.getElementById("saveEditBtn").addEventListener("click", () => {
+            const newVal = document.getElementById("editInput").value.trim();
+            if (!newVal) return;
+            const oldVal = cats[idx];
+            cats[idx] = newVal;
+            saveCategories(cats);
+            if (oldVal !== newVal) {
+              saveProducts(getProducts().map(p => p.category === oldVal ? { ...p, category: newVal } : p));
+            }
+            renderCats();
+          });
+        });
+      });
+    }
+
+    document.getElementById("newCatBtn").addEventListener("click", () => {
+      const name = prompt("Nombre de la nueva categoría:");
+      if (name && name.trim()) {
+        const cats = getCategories();
+        cats.push(name.trim());
+        saveCategories(cats);
+        renderCats();
+      }
+    });
+
+    renderCats();
+  </script>
+</body>
+</html>

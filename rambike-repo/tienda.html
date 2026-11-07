@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE.PE — Tienda</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-header">
+      <span class="brand">Tienda</span>
+      <div class="header-actions">
+        <a href="carrito.html" class="icon-btn nav-icon-wrap" aria-label="Carrito">
+          🛒<span class="cart-badge">0</span>
+        </a>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" id="searchInput" placeholder="Buscar repuestos o accesorios..." />
+    </div>
+
+    <div class="category-chips" id="catChips"></div>
+
+    <div class="section-title" id="resultsLabel">Todos los productos</div>
+    <div class="product-grid" id="grid"></div>
+    <div id="emptyState" style="display:none" class="empty-state">
+      <div class="big-icon">🔎</div>
+      <p>No se encontraron productos</p>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"><span class="nav-icon">🏠</span>Inicio</a>
+    <a href="tienda.html" class="active"><span class="nav-icon">🏪</span>Tienda</a>
+    <a href="carrito.html" class="nav-icon-wrap"><span class="nav-icon">🛒<span class="cart-badge">0</span></span>Carrito</a>
+  </nav>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    let activeCategory = params.get("cat") || "Todos";
+    let searchTerm = "";
+
+    const categories = ["Todos", ...getCategories()];
+    const chipsEl = document.getElementById("catChips");
+
+    function renderChips() {
+      chipsEl.innerHTML = categories.map(c =>
+        `<button class="chip ${c === activeCategory ? 'active' : ''}" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+      ).join("");
+      chipsEl.querySelectorAll(".chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          activeCategory = btn.dataset.cat;
+          renderChips();
+          renderGrid();
+        });
+      });
+    }
+
+    function renderGrid() {
+      let products = getProducts();
+      if (activeCategory !== "Todos") {
+        products = products.filter(p => p.category === activeCategory);
+      }
+      if (searchTerm.trim() !== "") {
+        const term = searchTerm.toLowerCase();
+        products = products.filter(p => p.name.toLowerCase().includes(term));
+      }
+
+      document.getElementById("resultsLabel").textContent =
+        activeCategory === "Todos" ? "Todos los productos" : activeCategory;
+
+      const grid = document.getElementById("grid");
+      const empty = document.getElementById("emptyState");
+
+      if (products.length === 0) {
+        grid.style.display = "none";
+        empty.style.display = "block";
+        return;
+      }
+      grid.style.display = "grid";
+      empty.style.display = "none";
+
+      grid.innerHTML = products.map(p => `
+        <a href="producto.html?id=${p.id}" class="product-card">
+          <div style="position:relative">
+            <img class="thumb" src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" />
+            <span class="badge ${p.stock ? 'ok' : 'out'}">${p.stock ? 'Disponible' : 'Agotado'}</span>
+          </div>
+          <div class="info">
+            <p class="pname">${escapeHtml(p.name)}</p>
+            <span class="pprice">${formatPrice(p.price)}</span>
+          </div>
+        </a>
+      `).join("");
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchTerm = e.target.value;
+      renderGrid();
+    });
+
+    renderChips();
+    renderGrid();
+    updateCartBadge();
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE Admin — Producto</title>
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="admin-wrapper">
+    <div id="sidebarRoot"></div>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1 id="formTitle">Nuevo producto</h1>
+      </div>
+
+      <div class="admin-card">
+        <div class="form-group">
+          <label>Foto del producto</label>
+          <div class="upload-box" id="uploadBox">
+            <img class="preview" id="imgPreview" src="https://picsum.photos/seed/new-product/200/200" alt="Vista previa" />
+            <div>Vista previa (demo: usa una imagen de muestra automática)</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pname">Nombre del producto</label>
+          <input type="text" id="pname" placeholder="Ej. Manillar de Carbono MTB Pro" />
+        </div>
+
+        <div class="form-group">
+          <label for="pcat">Categoría</label>
+          <select id="pcat"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="pprice">Precio (S/)</label>
+          <input type="number" id="pprice" min="0" step="0.01" placeholder="0.00" />
+        </div>
+
+        <div class="form-group">
+          <label for="pdesc">Descripción</label>
+          <textarea id="pdesc" placeholder="Describe el producto..."></textarea>
+        </div>
+
+        <div class="switch-row">
+          <span>Disponible en catálogo</span>
+          <label class="switch">
+            <input type="checkbox" id="pstock" aria-label="Disponible en catálogo" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button id="saveBtn" class="btn btn-primary">Guardar producto</button>
+          <a href="productos.html" class="btn btn-outline">Cancelar</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    requireAdminSession();
+    document.getElementById("sidebarRoot").innerHTML = renderAdminSidebar("productos.html");
+    wireLogout();
+
+    const catSelect = document.getElementById("pcat");
+    catSelect.innerHTML = getCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+    const params = new URLSearchParams(window.location.search);
+    const editId = params.get("id");
+    let editingProduct = null;
+
+    if (editId) {
+      editingProduct = getProductById(editId);
+      if (editingProduct) {
+        document.getElementById("formTitle").textContent = "Editar producto";
+        document.getElementById("pname").value = editingProduct.name;
+        catSelect.value = editingProduct.category;
+        document.getElementById("pprice").value = editingProduct.price;
+        document.getElementById("pdesc").value = editingProduct.desc;
+        document.getElementById("pstock").checked = editingProduct.stock;
+        document.getElementById("imgPreview").src = editingProduct.img;
+      }
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const name = document.getElementById("pname").value.trim();
+      const price = parseFloat(document.getElementById("pprice").value);
+
+      if (!name) { alert("Ingresa el nombre del producto."); return; }
+      if (isNaN(price) || price <= 0) { alert("Ingresa un precio válido."); return; }
+
+      const products = getProducts();
+
+      if (editingProduct) {
+        const idx = products.findIndex(p => p.id === editingProduct.id);
+        products[idx] = {
+          ...products[idx],
+          name, price,
+          category: catSelect.value,
+          desc: document.getElementById("pdesc").value.trim(),
+          stock: document.getElementById("pstock").checked,
+        };
+      } else {
+        products.push({
+          id: nextProductId(),
+          name, price,
+          category: catSelect.value,
+          desc: document.getElementById("pdesc").value.trim(),
+          stock: document.getElementById("pstock").checked,
+          img: `https://picsum.photos/seed/rambike-${Date.now()}/500/500`,
+        });
+      }
+
+      saveProducts(products);
+      window.location.href = "productos.html";
+    });
+  </script>
+</body>
+</html>

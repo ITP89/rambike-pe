@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE.PE — Producto</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="phone-shell">
+    <header class="app-header">
+      <button class="icon-btn back-btn" onclick="history.back()" aria-label="Volver">←</button>
+      <span class="brand" style="font-size:16px">Producto</span>
+      <a href="carrito.html" class="icon-btn nav-icon-wrap" aria-label="Carrito">
+        🛒<span class="cart-badge">0</span>
+      </a>
+    </header>
+
+    <div id="productContainer"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"><span class="nav-icon">🏠</span>Inicio</a>
+    <a href="tienda.html" class="active"><span class="nav-icon">🏪</span>Tienda</a>
+    <a href="carrito.html" class="nav-icon-wrap"><span class="nav-icon">🛒<span class="cart-badge">0</span></span>Carrito</a>
+  </nav>
+
+  <div class="toast" id="toast">✓ Producto agregado al carrito</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/cart.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get("id");
+    const product = getProductById(productId);
+    const container = document.getElementById("productContainer");
+
+    if (!product) {
+      container.innerHTML = `<div class="empty-state"><div class="big-icon">⚠️</div><p>Producto no encontrado</p></div>`;
+    } else {
+      container.innerHTML = `
+        <div class="product-gallery">
+          <img class="gallery-main" src="${escapeHtml(product.img)}" alt="${escapeHtml(product.name)}" />
+        </div>
+        <div class="product-detail">
+          <span class="stock-badge ${product.stock ? 'ok' : 'out'}">${product.stock ? 'En stock' : 'Agotado'}</span>
+          <h1 class="product-name">${escapeHtml(product.name)}</h1>
+          <p class="product-price">${formatPrice(product.price)}</p>
+          <p class="product-desc">${escapeHtml(product.desc)}</p>
+
+          <div class="qty-row">
+            <label>Cantidad</label>
+            <div class="qty-control">
+              <button id="qtyMinus" type="button" aria-label="Disminuir">−</button>
+              <span id="qtyValue">1</span>
+              <button id="qtyPlus" type="button" aria-label="Aumentar">+</button>
+            </div>
+          </div>
+
+          <button id="addBtn" class="btn btn-primary" ${product.stock ? "" : "disabled"}>
+            ${product.stock ? "Añadir al carro" : "Producto agotado"}
+          </button>
+        </div>
+      `;
+
+      let qty = 1;
+      const qtyValueEl = document.getElementById("qtyValue");
+      document.getElementById("qtyMinus").addEventListener("click", () => {
+        if (qty > 1) { qty--; qtyValueEl.textContent = qty; }
+      });
+      document.getElementById("qtyPlus").addEventListener("click", () => {
+        qty++; qtyValueEl.textContent = qty;
+      });
+
+      const addBtn = document.getElementById("addBtn");
+      if (product.stock) {
+        addBtn.addEventListener("click", () => {
+          addToCart(product.id, qty);
+          const toast = document.getElementById("toast");
+          toast.classList.add("show");
+          setTimeout(() => toast.classList.remove("show"), 1800);
+        });
+      }
+    }
+
+    if (product && product.stock) {
+      const fab = document.createElement("a");
+      const waMsg = `Hola RAMBIKE, quiero consultar por: ${product.name} - ${formatPrice(product.price)}`;
+      fab.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMsg)}`;
+      fab.target = "_blank";
+      fab.className = "fab-whatsapp";
+      fab.innerHTML = "💬";
+      fab.title = "Consultar por WhatsApp";
+      document.querySelector(".phone-shell").appendChild(fab);
+    }
+
+    updateCartBadge();
+  </script>
+</body>
+</html>

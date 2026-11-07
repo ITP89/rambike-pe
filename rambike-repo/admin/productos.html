@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RAMBIKE Admin — Productos</title>
+<link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="admin-wrapper">
+    <div id="sidebarRoot"></div>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Productos</h1>
+        <a href="producto-form.html" class="btn btn-primary" style="width:auto; padding:11px 20px;">+ Nuevo producto</a>
+      </div>
+
+      <div class="admin-toolbar">
+        <input type="text" id="searchInput" placeholder="Buscar producto..." />
+        <select id="catFilter" aria-label="Filtrar por categoría"></select>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th></th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Estado</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="productsBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    requireAdminSession();
+    document.getElementById("sidebarRoot").innerHTML = renderAdminSidebar("productos.html");
+    wireLogout();
+
+    const catFilter = document.getElementById("catFilter");
+    catFilter.innerHTML = `<option value="Todas">Todas las categorías</option>` +
+      getCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+    let searchTerm = "";
+    let catTerm = "Todas";
+
+    function renderTable() {
+      let products = getProducts();
+      if (catTerm !== "Todas") products = products.filter(p => p.category === catTerm);
+      if (searchTerm.trim() !== "") {
+        const t = searchTerm.toLowerCase();
+        products = products.filter(p => p.name.toLowerCase().includes(t));
+      }
+
+      const body = document.getElementById("productsBody");
+      if (products.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px; color:#888;">No se encontraron productos</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = products.map(p => `
+        <tr>
+          <td><img class="mini-thumb" src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" /></td>
+          <td>${escapeHtml(p.name)}</td>
+          <td>${escapeHtml(p.category)}</td>
+          <td>${formatPrice(p.price)}</td>
+          <td><span class="status-pill ${p.stock ? 'ok' : 'out'}">${p.stock ? 'Disponible' : 'Agotado'}</span></td>
+          <td>
+            <div class="row-actions">
+              <a href="producto-form.html?id=${p.id}" class="icon-action" title="Editar">✏️</a>
+              <button class="icon-action delete-btn" data-id="${p.id}" title="Eliminar">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      body.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.dataset.id);
+          const prod = getProductById(id);
+          if (confirm(`¿Eliminar "${prod.name}" del catálogo?`)) {
+            const remaining = getProducts().filter(p => p.id !== id);
+            saveProducts(remaining);
+            renderTable();
+          }
+        });
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      searchTerm = e.target.value; renderTable();
+    });
+    catFilter.addEventListener("change", (e) => {
+      catTerm = e.target.value; renderTable();
+    });
+
+    renderTable();
+  </script>
+</body>
+</html>
